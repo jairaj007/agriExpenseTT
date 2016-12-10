@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -12,6 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
+import uwi.dcit.AgriExpenseTT.helpers.DataManager;
 import uwi.dcit.AgriExpenseTT.helpers.DbHelper;
 import uwi.dcit.AgriExpenseTT.helpers.DbQuery;
 import uwi.dcit.AgriExpenseTT.helpers.TransactionLog;
@@ -37,8 +40,10 @@ public class CloudInterface {
 	SQLiteDatabase db;
 	DbHelper dbh;
 	TransactionLog tL;
+	Context context;
 
 	public CloudInterface(Context context) {
+		this.context = context;
 		dbh= new DbHelper(context);
 		db=dbh.getWritableDatabase();
 		tL=new TransactionLog(dbh,db,context);
@@ -122,7 +127,7 @@ public class CloudInterface {
 		
 	}
 
-	private class PurchaseUpdater extends AsyncTask<Void,Void,Void>{
+	private class PurchaseUpdater extends AsyncTask<Void,Void,Void> {
 
 		@Override
 		protected Void doInBackground(Void... params) {
@@ -138,7 +143,25 @@ public class CloudInterface {
 			Iterator<Integer> rowI=rowIds.iterator();
 			while(logI.hasNext()){
 				int logId=logI.next(),rowId=rowI.next();//the current primary key of CROP CYCLE Table
-				RPurchase p=DbQuery.getARPurchase(db, dbh, rowId);
+
+
+				////////////////////////////////-------------------NEW CODE----------------------------------------------///////////////////////////////////////////////////////////////////
+				PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+				ph.setDb(db);
+				ph.setDbh(dbh);
+				ph.setResId(rowId);
+				Object o = null;
+				try {
+					o = DbQuery.get(context, "purchase", ph, "getARPurchase");
+				}
+				catch(java.lang.Exception e){
+					Log.i("Doesn't work" , ":(");
+				}
+				RPurchase p = RPurchase.class.cast(o);
+				////////////////////////////////-------------------NEW CODE END----------------------------------------------///////////////////////////////////////////////////////////////////
+
+
+
 				String keyrep=DbQuery.getKey(db, dbh, ResourcePurchaseEntry.TABLE_NAME, p.getPId());
 				try{
 					p.setKeyrep(keyrep);
@@ -310,7 +333,23 @@ public class CloudInterface {
 			Iterator<Integer> rowI=rowIds.iterator();
 			while(logI.hasNext()){
 				int logId=logI.next(),rowId=rowI.next();
-				RPurchase purchase=DbQuery.getARPurchase(db, dbh, rowId);
+
+				//////////////////////////////----------------------Changes-----------------------///////////////////////////////
+				PurchaseQueryDataHolder p2 =  new PurchaseQueryDataHolder();
+				p2.setDb(db);
+				p2.setDbh(dbh);
+				p2.setResId(rowId);
+				Object o1 = null;
+				try {
+					o1 = DbQuery.get(context, "Purchase", p2, "getARPurchase");
+				}
+				catch(java.lang.Exception e){
+					Log.i("Doesn't work" , ":(");
+
+				}
+				RPurchase purchase= RPurchase.class.cast(o1);
+				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 				purchase.setAccount(DbQuery.getAccount(db));
 				try{
 					purchase=endpoint.insertRPurchase(purchase).execute();
