@@ -5,11 +5,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import java.util.Calendar;
 import java.util.Date;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
 import uwi.dcit.AgriExpenseTT.models.CloudKeyContract;
 import uwi.dcit.AgriExpenseTT.models.CountryContract;
 import uwi.dcit.AgriExpenseTT.models.CountyContract;
@@ -26,8 +28,13 @@ import uwi.dcit.AgriExpenseTT.models.TransactionLogContract.TransactionLogEntry;
 import uwi.dcit.AgriExpenseTT.models.UpdateAccountContract;
 import uwi.dcit.agriexpensesvr.upAccApi.model.UpAcc;
 
+
 public class DbHelper extends SQLiteOpenHelper{
 
+	//For the purposes of the Project only functions associated with Purchases were removed, this Class would have just the following functions if the entire redesign was completed
+
+
+	//////////////////////////////DB Helper.java///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	public static final int VERSION = 172;
 	public static final String DATABASE_NAME="agriDb";
 	public static final String TAG_NAME = "AgriExpenseDBHelper";
@@ -82,8 +89,25 @@ public class DbHelper extends SQLiteOpenHelper{
             // Place the resource name as the default name of the cycle
             updateCycleCropName(db);
 
-            // Place the update date as the date for the previously created resources purchased
-            updatePurchaseRecs(db);
+
+
+
+			//////////////////////////MAIN CHANGE///////////////////////////////////
+            //Calls the update purchase method from the purcahse class itself
+			PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+			ph.setDb(db);
+			try {
+				DbQuery.get("purchases",ph,"updatePurchaseRecs");
+			}
+			catch(java.lang.Exception e){
+				Log.i("Doesn't work" , ":(");
+
+			}
+			//////////////////////////MAIN CHANGE END///////////////////////////////////
+
+
+
+
 
             // Add Date Column to CycleResource
             db.execSQL("ALTER TABLE " + CycleResourceContract.CycleResourceEntry.TABLE_NAME + " ADD COLUMN "+ CycleResourceContract.CycleResourceEntry.CYCLE_DATE_USED +  " TIMESTAMP");
@@ -256,7 +280,50 @@ public class DbHelper extends SQLiteOpenHelper{
 		insertDefaultCountries(db);
 		insertDefaultCounties(db);
 	}
-	
+
+
+
+
+
+
+
+	private boolean columnExists(SQLiteDatabase db, String tableName, String columnName){
+		Cursor cursor = db.rawQuery("PRAGMA table_info("+tableName+");", null);
+		while (cursor.moveToNext()){
+			if (cursor.getString(cursor.getColumnIndex("name")).equalsIgnoreCase(columnName)){
+				cursor.close();
+				return true;
+			}
+		}
+		cursor.close();
+		return false;
+	}
+
+
+	///This Function will be removed and placed in the Purchase class
+	 /*
+	//private void updatePurchaseRecs(SQLiteDatabase  db){
+		Cursor cursor = db.rawQuery("SELECT * FROM " + ResourcePurchaseContract.ResourcePurchaseEntry.TABLE_NAME, null);
+		// Update Existing Dates to the current date
+		while(cursor.moveToNext()){
+			ContentValues cv = new ContentValues();
+			cv.put(ResourcePurchaseContract.ResourcePurchaseEntry.RESOURCE_PURCHASE_DATE,  DateFormatHelper.getDateUnix(new Date()) );
+		}
+		cursor.close();
+	}
+
+	*/
+
+
+
+	///////////////////////////////////////////DbHelper.java END///////////////////////////////////////////////////////////////
+
+
+
+
+
+	//This following will be moved it the appropriate java class
+
 	public void insertDefaultCrops(SQLiteDatabase db){
 		//planting material - reference cardi - Caribbean Agricultural Research and Development Institute
 		//general
@@ -507,15 +574,7 @@ public class DbHelper extends SQLiteOpenHelper{
 		}
 	}
 
-    private void updatePurchaseRecs(SQLiteDatabase  db){
-        Cursor cursor = db.rawQuery("SELECT * FROM " + ResourcePurchaseContract.ResourcePurchaseEntry.TABLE_NAME, null);
-        // Update Existing Dates to the current date
-        while(cursor.moveToNext()){
-            ContentValues cv = new ContentValues();
-            cv.put(ResourcePurchaseContract.ResourcePurchaseEntry.RESOURCE_PURCHASE_DATE,  DateFormatHelper.getDateUnix(new Date()) );
-        }
-        cursor.close();
-    }
+
 
     private void updateCycleCropName(SQLiteDatabase db) {
         Cursor cursor = db.rawQuery("SELECT * FROM " + CycleContract.CycleEntry.TABLE_NAME, null);
@@ -537,15 +596,5 @@ public class DbHelper extends SQLiteOpenHelper{
         cursor.close();
     }
 
-    private boolean columnExists(SQLiteDatabase db, String tableName, String columnName){
-        Cursor cursor = db.rawQuery("PRAGMA table_info("+tableName+");", null);
-        while (cursor.moveToNext()){
-            if (cursor.getString(cursor.getColumnIndex("name")).equalsIgnoreCase(columnName)){
-                cursor.close();
-                return true;
-            }
-        }
-        cursor.close();
-        return false;
-    }
+
 }

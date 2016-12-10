@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
 import uwi.dcit.AgriExpenseTT.R;
 import uwi.dcit.AgriExpenseTT.models.LocalCycle;
 import uwi.dcit.AgriExpenseTT.models.LocalCycleUse;
@@ -49,6 +50,7 @@ public class ReportHelper {
 		dbh = new DbHelper(act.getBaseContext());
 		db = dbh.getWritableDatabase();
 		activity = act;
+
 	}
 	
 	public static void createReportDirectory(){
@@ -187,7 +189,25 @@ public class ReportHelper {
 		for( LocalCycleUse lcu:useList){
 			 rowNum++;int c=0;
 			 HSSFRow row=useSheet.createRow(rowNum);
-			 RPurchase p=DbQuery.getARPurchase(db, dbh, lcu.getPurchaseId());
+
+
+			//------------------New Design-----------------------------------------//
+
+			PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+			ph.setDb(db);
+			ph.setDbh(dbh);
+			ph.setResId(lcu.getPurchaseId());
+			Object o = null;
+			try {
+				o= DbQuery.get(activity.getBaseContext(), "purchase", ph, "getARPurchase");
+			}
+			catch(java.lang.Exception e){
+				Log.i("Doesn't work" , ":(");
+
+			}
+			RPurchase p = RPurchase.class.cast(o);
+
+			///////////////////////////////////////////////////////////////////////////
 			 
 			 HSSFCell resCell=row.createCell(c++);
 			 //resCell.setCellType(Cell.CELL_TYPE_STRING);
@@ -216,7 +236,28 @@ public class ReportHelper {
 
 	private void populate(ArrayList<LocalCycleUse> useList,
 			ArrayList<LocalResourcePurchase> purList, String type, int cycId) {
-		DbQuery.getPurchases(db, dbh, purList, type, null,true);
+
+
+
+
+		PurchaseQueryDataHolder rp = new PurchaseQueryDataHolder();
+		rp.setDbh(dbh);
+		rp.setDb(db);
+		rp.setList(purList);
+		rp.setType(type);
+		rp.setQuantifier(null);
+		rp.setAllowFinished(true);
+		Object o = null;
+		try {
+			o= DbQuery.get(activity.getBaseContext(), "purchase", rp, "getPurchase");
+		}
+		catch(java.lang.Exception e){
+			Log.i("Doesn't work" , ":(");
+
+		}
+		PurchaseQueryDataHolder p = PurchaseQueryDataHolder.class.cast(o);
+		purList = p.getList();
+
 		DbQuery.getCycleUse(db, dbh, cycId, useList, type);
 	}
 	
