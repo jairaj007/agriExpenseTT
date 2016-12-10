@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -27,6 +28,7 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
 import uwi.dcit.AgriExpenseTT.Main;
 import uwi.dcit.AgriExpenseTT.NewPurchase;
 import uwi.dcit.AgriExpenseTT.R;
@@ -39,6 +41,7 @@ import uwi.dcit.AgriExpenseTT.models.CycleContract.CycleEntry;
 import uwi.dcit.AgriExpenseTT.models.LocalCycle;
 import uwi.dcit.AgriExpenseTT.models.ResourcePurchaseContract.ResourcePurchaseEntry;
 import uwi.dcit.agriexpensesvr.rPurchaseApi.model.RPurchase;
+
 
 //import com.dcit.agriexpensett.rPurchaseApi.model.RPurchase;
 
@@ -57,6 +60,8 @@ public class FragmentNewPurchaseLast extends Fragment{
 	private DbHelper dbh;
     private long unixDate;
     private TextView helper_cost;
+    private double qty;
+    private double      cost;
 
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
@@ -141,7 +146,7 @@ public class FragmentNewPurchaseLast extends Fragment{
             }
 
 			else if(v.getId() == R.id.btn_newpurchaselast_done){
-				double qty,cost;
+
 				if( ((et_qty.getText().toString()) == null)||((et_qty.getText().toString()).equals(""))  ){
 
 					helper_qty.setText("Enter Quantity Purchased");
@@ -170,22 +175,71 @@ public class FragmentNewPurchaseLast extends Fragment{
 				try{
 					currC=getArguments().getParcelable("cycle");
 				}catch (Exception e){ e.printStackTrace();}
-				//this is for when labour is 'purchased'/hired for a single cycle
-				if(category.equals(DHelper.cat_labour) && currC != null){
 
-					//insert purchase
-					res = dm.insertPurchase(resId, quantifier, qty, category, cost);
-					int pId=DbQuery.getLast(db, dbh,ResourcePurchaseEntry.TABLE_NAME);
-					RPurchase p=DbQuery.getARPurchase(db, dbh, pId);
 
+                    //this is for when labour is 'purchased'/hired for a single cycle
+                    if(category.equals(DHelper.cat_labour) && currC != null){
+
+                        //insert purchase
+
+                    //////////////////////////###########################//////////////////////////////////////////////////////////////////////////////////
+                    //------------------New Design-----------------------------------------//
+                    //Here we create the RPurchase object
+                    RPurchase rp = new RPurchase();
+
+                    rp.setResourceId(resId);
+                    rp.setQuantifier(quantifier);
+                    rp.setType(category);
+                    rp.setQty(qty);
+                    rp.setCost(cost);
+
+                    //This is used to tell the program that the other category was not chosen
+                    Integer n = -1;
+                    rp.setTime(n.longValue());
+
+
+					res = dm.insert(getActivity().getBaseContext(),"purchase",rp);
+                        int pId=DbQuery.getLast(db, dbh,ResourcePurchaseEntry.TABLE_NAME);
+
+
+
+                    //This is corrected in Jairaj's Part//////////////////////////////////////////
+                        PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+
+                        ph.setDb(db);
+                        ph.setDbh(dbh);
+                        ph.setResId(pId);
+                        Object o = null;
+                        try {
+                            o= DbQuery.get(getActivity().getBaseContext(), "purchase", ph, "getARPurchase");
+                        }
+                        catch(java.lang.Exception e){
+                            Log.i("Doesn't work" , ":(");
+
+                        }
+                        RPurchase p = RPurchase.class.cast(o);
+
+                    ///////////////////////////////////////////////////////////////////////////
+
+
+
+
+                    //Left as is///////////////////////////////////////////////////////////////////////////
 					//use all of the qty of that purchase in the given cycle
 					dm.insertCycleUse(currC.getId(), p.getPId(), qty, p.getType(),quantifier,p.getCost());
+                    ///////////////////////////////////////////////////////////////////////////////////////
 
+
+
+                    //Update fixed/////////////////////////////////////////////////////////////////////////
 					//update purchase
 					p.setQtyRemaining(p.getQtyRemaining() - qty);
 					ContentValues cv=new ContentValues();
 					cv.put(ResourcePurchaseEntry.RESOURCE_PURCHASE_REMAINING,p.getQtyRemaining());
-					dm.updatePurchase(p,cv);
+					dm.update(getActivity().getBaseContext(),"Purchase",p,cv);
+                     ////////////////////////////////////////////////////////////////////////
+
+
 
 					//update cycle
 					currC.setTotalSpent(currC.getTotalSpent()+cost);
@@ -193,14 +247,24 @@ public class FragmentNewPurchaseLast extends Fragment{
 					cv.put(CycleEntry.CROPCYCLE_TOTALSPENT, currC.getTotalSpent());
 					dm.updateCycle(currC,cv);
 
-				}else{
+				} else{
 					if(category.equals(DHelper.cat_other)){//if its the other category
 						if(resId==-1){//and the resource does not exist
 							resId=DbQuery.insertResource(db, dbh, DHelper.cat_other, resource);//then insert it !
 						}
 					}
 //					dm.insertPurchase(resId, quantifier, qty, category, cost);
-                    res = dm.insertPurchase(resId, quantifier, qty, category, cost, unixDate);
+                    //Do insert as above using RPurchase/////////////////////////////////////////////////
+                       // RPurchase
+                        RPurchase rp2 = new RPurchase();
+                        rp2.setResourceId(resId);
+                        rp2.setQuantifier(quantifier);
+                        rp2.setType(category);
+                        rp2.setQty(qty);
+                        rp2.setCost(cost);
+                        rp2.setTime(unixDate);
+                    res = dm.insert(getActivity().getApplicationContext(),"Purchase",rp2);
+                    ///////////////////////////////////////////////////////////////////////////////////////
 				}
 
                 if (res != -1)Toast.makeText(getActivity(), "Purchase Successfully Saved", Toast.LENGTH_SHORT).show();

@@ -21,15 +21,18 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
 import uwi.dcit.AgriExpenseTT.R;
 import uwi.dcit.AgriExpenseTT.ViewCycleUsege;
 import uwi.dcit.AgriExpenseTT.helpers.DHelper;
+import uwi.dcit.AgriExpenseTT.helpers.DataManager;
 import uwi.dcit.AgriExpenseTT.helpers.DbHelper;
 import uwi.dcit.AgriExpenseTT.helpers.DbQuery;
 import uwi.dcit.AgriExpenseTT.helpers.GAnalyticsHelper;
 import uwi.dcit.AgriExpenseTT.helpers.NavigationControl;
 import uwi.dcit.AgriExpenseTT.models.LocalCycle;
 import uwi.dcit.AgriExpenseTT.models.LocalCycleUse;
+import uwi.dcit.AgriExpenseTT.models.ResourcePurchaseContract;
 import uwi.dcit.agriexpensesvr.rPurchaseApi.model.RPurchase;
 
 //import com.dcit.agriexpensett.rPurchaseApi.model.RPurchase;
@@ -138,8 +141,27 @@ public class FragmentCycleUseCategory extends Fragment {
 				LocalCycleUse lcu = itr.next();
                 Log.d(TAG, "Processing: " + lcu.toString());
 				catTotal += lcu.getUseCost();//stores the total amount of money spent on plantMaterials
-						
-				RPurchase purchaseUse = DbQuery.getARPurchase(db, dbh,lcu.getPurchaseId());
+
+
+				//------------------New Design-----------------------------------------//
+
+				PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+				ph.setDb(db);
+				ph.setDbh(dbh);
+				ph.setResId(lcu.getPurchaseId());
+				Object o = null;
+				try {
+					o= DbQuery.get(getActivity().getBaseContext(), "purchase", ph, "getARPurchase");
+				}
+				catch(java.lang.Exception e){
+					Log.i("Doesn't work" , ":(");
+
+				}
+				RPurchase purchaseUse = RPurchase.class.cast(o);
+
+				///////////////////////////////////////////////////////////////////////////
+
+
 				String name = DbQuery.findResourceName(db, dbh, purchaseUse.getResourceId());
 						
 				//calculates the total spent on each plantMaterial

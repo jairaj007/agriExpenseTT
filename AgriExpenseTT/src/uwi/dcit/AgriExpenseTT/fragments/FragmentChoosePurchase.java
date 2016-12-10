@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
 import uwi.dcit.AgriExpenseTT.EditPurchase;
 import uwi.dcit.AgriExpenseTT.R;
 import uwi.dcit.AgriExpenseTT.helpers.CurrencyFormatHelper;
@@ -41,6 +42,7 @@ import uwi.dcit.AgriExpenseTT.helpers.GAnalyticsHelper;
 import uwi.dcit.AgriExpenseTT.helpers.NavigationControl;
 import uwi.dcit.AgriExpenseTT.models.LocalCycle;
 import uwi.dcit.AgriExpenseTT.models.LocalResourcePurchase;
+import uwi.dcit.agriexpensesvr.rPurchaseApi.model.RPurchase;
 
 public class FragmentChoosePurchase extends ListFragment {
 	PurchaseListAdapter myListAdapter;
@@ -86,11 +88,52 @@ public class FragmentChoosePurchase extends ListFragment {
 	
 	private void populateList() {
 		pList	= new ArrayList<>();
-		
+		////////////////////////////////-------------------NEW CODE----------------------------------------------///////////////////////////////////////////////////////////////////
+		PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+
+		ph.setDb(db);
+		ph.setDbh(dbh);
+		ph.setList(pList);
+
+		ph.setQuantifier(null);
+
+
+		DataManager dm = new DataManager();
+		Object o = null;
+
+
+
 		if(type != null && (type.equals("delete") || type.equals("edit")))
-			DbQuery.getPurchases(db, dbh, pList, null, null, true);
-		else
-			DbQuery.getPurchases(db, dbh, pList, type, null,false);//also the type should 
+			{
+				ph.setType(null);
+				ph.setAllowFinished(true);
+				try {
+					o= DbQuery.get(getActivity().getBaseContext(), "purchase", ph, "getPurchases");
+				}
+				catch(java.lang.Exception e){
+					Log.i("Doesn't work" , ":(");
+
+				}
+			}
+		else {
+			ph.setType(type);
+			ph.setAllowFinished(false);
+
+			try {
+
+				o= DbQuery.get(getActivity().getBaseContext(), "purchase", ph, "getPurchases");
+				//throw new java.lang.Exception();
+
+			}
+			catch(java.lang.Exception e){
+				Log.i("Doesn't work" , ":(");
+
+			}
+		}
+		PurchaseQueryDataHolder p = PurchaseQueryDataHolder.class.cast(o);
+
+		pList=p.getList();
+		////////////////////////////////-------------------NEW CODE END----------------------------------------------///////////////////////////////////////////////////////////////////
 	
 		Collections.sort(pList, new Comparator<LocalResourcePurchase>(){
 			@Override
@@ -197,7 +240,30 @@ public class FragmentChoosePurchase extends ListFragment {
 		 super.onActivityResult(requestCode, resultCode, data);
 		 //refill list
 		 pList=new ArrayList<>();
-		 DbQuery.getPurchases(db, dbh, pList, null, null,true);
+
+		 ////////////////////////////////-------------------NEW CODE----------------------------------------------///////////////////////////////////////////////////////////////////
+		 PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+
+		 ph.setDb(db);
+		 ph.setDbh(dbh);
+		 ph.setList(pList);
+		 ph.setType(null);
+		 ph.setAllowFinished(true);
+		 ph.setQuantifier(null);
+
+		 Object o = null;
+
+			 try {
+				 o= DbQuery.get(getActivity().getBaseContext(), "purchase", ph, "getPurchases");
+			 }
+			 catch(java.lang.Exception e){
+				 Log.i("Doesn't work" , ":(");
+
+			 }
+		 PurchaseQueryDataHolder p = PurchaseQueryDataHolder.class.cast(o);
+		 pList=p.getList();
+		 ////////////////////////////////-------------------NEW CODE END----------------------------------------------///////////////////////////////////////////////////////////////////
+
 		 myListAdapter.notifyDataSetChanged();
 	 }
 	 
@@ -211,7 +277,11 @@ public class FragmentChoosePurchase extends ListFragment {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			if(which==DialogInterface.BUTTON_POSITIVE){
-				dm.deletePurchase(pList.get(position).toRPurchase());
+
+				//New Code/////////////////////////////////////////////////////////////////////
+				dm.delete(getActivity().getBaseContext(),"Purchase",pList.get(position).toRPurchase());
+				////////////////////////////////////////////////////////////////////////////////////////
+
 				pList.remove(position);
 				l.notifyDataSetChanged();
 				Toast.makeText(getActivity(),"Purchase and its related cycles successfully deleted", Toast.LENGTH_SHORT).show();			

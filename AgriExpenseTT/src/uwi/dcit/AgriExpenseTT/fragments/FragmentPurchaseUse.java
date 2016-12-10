@@ -27,6 +27,7 @@ import android.widget.Toast;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
 import uwi.dcit.AgriExpenseTT.CycleUseage;
 import uwi.dcit.AgriExpenseTT.R;
 import uwi.dcit.AgriExpenseTT.helpers.DHelper;
@@ -83,11 +84,29 @@ public class FragmentPurchaseUse extends Fragment {
 	}
 	
 	private void setDetails(int pId,int cycleId) {
-		p = DbQuery.getARPurchase(db, dbh, pId);
+
+		//------------------New Design-----------------------------------------//
+
+		PurchaseQueryDataHolder ph = new PurchaseQueryDataHolder();
+		ph.setDb(db);
+		ph.setDbh(dbh);
+		ph.setResId(pId);
+		Object o = null;
+		try {
+			o= DbQuery.get(getActivity().getBaseContext(), "purchase", ph, "getARPurchase");
+
+		}
+		catch(java.lang.Exception e){
+			Log.i("Doesn't work" , ":(");
+
+		}
+		p = RPurchase.class.cast(o);
+
+		///////////////////////////////////////////////////////////////////////////
 		c = getArguments().getParcelable("cycleMain");
 
         Log.i("Fragment Purchase",c.getCropName());
-        Log.i("Fragment Purchase",p.getQuantifier());
+        Log.i("Fragment Purchase",p.getPId()+"");
 
 		amtRem = p.getQtyRemaining();
         amtPur = p.getQty();
@@ -173,7 +192,11 @@ public class FragmentPurchaseUse extends Fragment {
 					p.setQtyRemaining(rem);
 					ContentValues cv=new ContentValues();
 					cv.put(ResourcePurchaseContract.ResourcePurchaseEntry.RESOURCE_PURCHASE_REMAINING,p.getQtyRemaining());
-					dm.updatePurchase(p,cv);
+
+					//New Code/////////////////////////////
+					dm.update(getActivity().getApplicationContext(),"Purchase",p,cv);
+					////////////////////////////////////////////////////
+
 
 					//updating cycle
 					c.setTotalSpent(c.getTotalSpent()+ calCost);
