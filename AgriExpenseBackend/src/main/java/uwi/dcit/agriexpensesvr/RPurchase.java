@@ -22,6 +22,7 @@ public class RPurchase {
     private double qtyRemaining;
     private String type;
     private String elementName;
+   private long time;
 
     public String getKeyrep() {
         return keyrep;
@@ -37,7 +38,7 @@ public class RPurchase {
     }
 
     public RPurchase(int pId, int resourceId, String quantifier, double qty,
-                     double cost, double qtyRemaining, String type) {
+                     double cost, double qtyRemaining, String type, long time) {
         super();
         this.pId = pId;
         this.resourceId = resourceId;
@@ -118,6 +119,14 @@ public class RPurchase {
 
     public void setAccount(String account) {
         this.account = account;
+    }
+
+    public void setTime (long unix){
+        time=unix;
+    }
+
+    public long getTime(){
+        return time;
     }
 
     @Override
