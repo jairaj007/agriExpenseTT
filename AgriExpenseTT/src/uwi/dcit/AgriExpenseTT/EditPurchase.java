@@ -189,7 +189,11 @@ public class EditPurchase extends BaseActivity {
 		//Toast.makeText(EditPurchase.this, resource+" "+quantifier+" "+qty+" "+cost, Toast.LENGTH_LONG).show();
 		DataManager dm=new DataManager(EditPurchase.this, db, dbh);
 		RPurchase rp=p.toRPurchase();
-		dm.updatePurchase(rp, cv);
+
+		//New Code///////////////////////////////////////////////////////////////////////////////////////////////
+		dm.update(getBaseContext(),"Purchase",rp, cv);
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 		Intent i=new Intent();
 		setResult(1,i);
 		finish();

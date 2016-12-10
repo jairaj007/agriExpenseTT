@@ -3,6 +3,7 @@ package uwi.dcit.AgriExpenseTT;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
+import uwi.dcit.AgriExpenseTT.helpers.DataManager;
 import uwi.dcit.AgriExpenseTT.helpers.DbHelper;
 import uwi.dcit.AgriExpenseTT.helpers.DbQuery;
 import uwi.dcit.AgriExpenseTT.helpers.GAnalyticsHelper;
@@ -39,7 +42,35 @@ public class ViewCycleUsege extends BaseActivity {
 		db=dbh.getWritableDatabase();
 		
 		pList=new ArrayList<LocalResourcePurchase>();
-		DbQuery.getPurchases(db, dbh, pList, type, null,true);
+
+
+		PurchaseQueryDataHolder rp = new PurchaseQueryDataHolder();
+		rp.setDbh(dbh);
+		rp.setDb(db);
+		rp.setList(pList);
+		rp.setType(type);
+		rp.setQuantifier(null);
+		rp.setAllowFinished(true);
+		Object o = null;
+		try {
+			o= DbQuery.get(getBaseContext(), "purchase", rp, "getPurchase");
+		}
+		catch(java.lang.Exception e){
+			Log.i("Doesn't work" , ":(");
+
+		}
+		PurchaseQueryDataHolder p = PurchaseQueryDataHolder.class.cast(o);
+		pList = p.getList();
+
+
+
+
+
+
+
+
+
+
 		ListView listview=(ListView)findViewById(R.id.listview_cycleUse);
 		
 		DbQuery.getCycleUse(db, dbh, cycleId, list, type);

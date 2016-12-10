@@ -1,10 +1,12 @@
 package uwi.dcit.AgriExpenseTT;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +22,7 @@ import uwi.dcit.AgriExpenseTT.helpers.DHelper;
 import uwi.dcit.AgriExpenseTT.helpers.DbHelper;
 import uwi.dcit.AgriExpenseTT.helpers.DbQuery;
 import uwi.dcit.AgriExpenseTT.helpers.GAnalyticsHelper;
+import uwi.dcit.AgriExpenseTT.lists.AgriListHandler;
 
 public class EditChooseLists extends BaseActivity {
 	ArrayList<String> list;
@@ -29,14 +32,16 @@ public class EditChooseLists extends BaseActivity {
 	DbHelper dbh;
 	String content;
 	String category;
+	Context context;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		context = getApplicationContext();
 		setContentView(R.layout.list_reuse);
 		//get list
 		initialize();
 		populateList();
-		ArrayAdapter<String> listAdapt=new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,list);
+		ArrayAdapter<String> listAdapt = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);
 		lv.setAdapter(listAdapt);
 		ItemClick c=new ItemClick();
 		lv.setOnItemClickListener(c);
@@ -47,21 +52,20 @@ public class EditChooseLists extends BaseActivity {
 
         // Google Analytics
         GAnalyticsHelper.getInstance(this.getApplicationContext()).sendScreenView("Edit Choose Lists Screen");
-	}
-	public class ItemClick implements OnItemClickListener{
 
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			Intent i=new Intent();
-			i.putExtra("desc",content);
-			i.putExtra("content", list.get(position));
-			setResult(1,i);//used to set the results for the parent activity ( the one that launched this one)
-			finish();
-		}
-		
 	}
 
-	private void populateList() {
+
+	private void populateList(){
+		category = getIntent().getExtras().getString("category");
+		AgriListHandler agriListHandler = new AgriListHandler(context);
+
+		list = agriListHandler.generateList(content, category ,list);
+
+		Collections.sort(list);
+	}
+
+/*	private void populateList() {
 		if(content.equals(DHelper.cat_plantingMaterial)
 				||content.equals(DHelper.cat_fertilizer)
 				||content.equals(DHelper.cat_chemical)
@@ -70,7 +74,7 @@ public class EditChooseLists extends BaseActivity {
 			DbQuery.getResources(db, dbh, content, list);
 		}else if(content.equals("land")){
 			list.add("acre");
-			list.add("hectre");
+			list.add("hectare");
 			list.add("bed");
 		}else if(content.equals("quantifier")){
 			category=getIntent().getExtras().getString("category");
@@ -104,8 +108,7 @@ public class EditChooseLists extends BaseActivity {
 		}
 
         Collections.sort(list);
-	}
-
+	}*/
 
 	private void initialize() {
 		dbh=new DbHelper(EditChooseLists.this);
@@ -116,7 +119,6 @@ public class EditChooseLists extends BaseActivity {
 		Bundle data=getIntent().getExtras();
 		content=data.getString("desc");
 	}
-
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -137,6 +139,20 @@ public class EditChooseLists extends BaseActivity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+
+	public class ItemClick implements OnItemClickListener {
+
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			Intent i = new Intent();
+			i.putExtra("desc", content);
+			i.putExtra("content", list.get(position));
+			setResult(1, i);//used to set the results for the parent activity ( the one that launched this one)
+			finish();
+		}
+
+	}
+
 	public class TWatch implements TextWatcher{
 		 ArrayAdapter<String> adpt;
 		 public TWatch(ArrayAdapter<String> adpt){

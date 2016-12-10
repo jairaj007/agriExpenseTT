@@ -17,9 +17,11 @@ import android.widget.EditText;
 
 import java.util.ArrayList;
 
+import uwi.dcit.AgriExpenseTT.Additional_Classes.Purchases_Queries.PurchaseQueryDataHolder;
 import uwi.dcit.AgriExpenseTT.fragments.FragmentChoosePurchase;
 import uwi.dcit.AgriExpenseTT.fragments.FragmentEmpty;
 import uwi.dcit.AgriExpenseTT.helpers.DHelper;
+import uwi.dcit.AgriExpenseTT.helpers.DataManager;
 import uwi.dcit.AgriExpenseTT.helpers.DbHelper;
 import uwi.dcit.AgriExpenseTT.helpers.DbQuery;
 import uwi.dcit.AgriExpenseTT.helpers.GAnalyticsHelper;
@@ -60,7 +62,29 @@ public class UseResource extends BaseActivity {
 		DbHelper dbh=new DbHelper(this);
 		SQLiteDatabase db=dbh.getWritableDatabase();
 		ArrayList<LocalResourcePurchase> pList=new ArrayList<LocalResourcePurchase>();
-		DbQuery.getPurchases(db, dbh, pList, type, null, false);
+
+
+		//---------------------------------------------------New Code---------------------------------------------------------//
+		PurchaseQueryDataHolder rp = new PurchaseQueryDataHolder();
+		rp.setDbh(dbh);
+		rp.setDb(db);
+		rp.setList(pList);
+		rp.setType(type);
+		rp.setQuantifier(null);
+		rp.setAllowFinished(false);
+		Object o = null;
+		try {
+			o= DbQuery.get(getBaseContext(), "purchase", rp, "getPurchase");
+		}
+		catch(java.lang.Exception e){
+			Log.i("Doesn't work" , ":(");
+
+		}
+		PurchaseQueryDataHolder p = PurchaseQueryDataHolder.class.cast(o);
+		pList = p.getList();
+
+		////-----------------------------------------------------New Code End-----------------------------------------------------////
+
 //		db.close();
 		if(pList.isEmpty()){
 			Fragment fragment	= new FragmentEmpty();
